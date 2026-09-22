@@ -36,6 +36,7 @@
         .hide-scroll::-webkit-scrollbar {
             display: none;
         }
+        /* Custom modal scroll */
         .modal-scroll {
             max-height: 70vh;
             overflow-y: auto;
@@ -47,7 +48,7 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 선생님의 Firebase 설정 객체 (GitHub 배포용)
+        // 선생님의 Firebase 프로젝트 설정 정보 (GitHub 배포용 순수 설정)
         const firebaseConfig = {
             apiKey: "AIzaSyAcQ20v392tkaOm2LkACO0f_4Jf66pfbVw",
             authDomain: "math-quiz-c2e7f.firebaseapp.com",
@@ -64,11 +65,10 @@
             db = getFirestore(app);
             auth = getAuth(app);
             
-            // 전역 변수로 할당 (script 태그 외부에서 사용하기 위함)
+            // 전역 변수 할당 (아래 일반 스크립트에서 사용하기 위함)
             window.db = db;
             window.auth = auth;
             window.fb = { doc, setDoc, getDoc, collection, onSnapshot, signInAnonymously };
-            
             console.log("Firebase가 성공적으로 초기화되었습니다.");
         } catch (e) {
             console.error("Firebase 초기화 에러:", e);
@@ -78,6 +78,7 @@
 
 <body class="h-screen overflow-hidden box-border flex flex-col">
 
+    <!-- 로그인 화면 -->
     <div id="login-screen" class="absolute inset-0 z-50 bg-slate-50 flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-200">
             <h1 class="text-3xl font-black text-center text-indigo-900 mb-2">수학 퀴즈 접속</h1>
@@ -106,9 +107,12 @@
         </div>
     </div>
 
+    <!-- 학생용 퀴즈 화면 -->
     <div id="student-screen" class="hidden h-full flex-col p-4 md:p-6 max-w-[1200px] mx-auto w-full relative">
-        <!-- 퀴즈 뷰 -->
+        
+        <!-- 퀴즈 뷰 (문제 푸는 화면) -->
         <div id="quiz-view" class="flex flex-col h-full w-full gap-4">
+            <!-- 상단 헤더 -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between items-center shrink-0">
                 <div>
                     <h1 id="questionTitle" class="text-2xl font-black text-indigo-900">문제 1</h1>
@@ -120,7 +124,9 @@
                 </div>
             </div>
 
+            <!-- 그래프 영역 -->
             <div class="flex-1 flex flex-col md:flex-row gap-4 min-h-0">
+                <!-- 도함수 차트 -->
                 <div class="w-full md:w-1/2 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col relative">
                     <div class="font-bold text-slate-800 flex justify-between items-center mb-2 px-2">
                         <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-500"></span> 제시된 도함수 \( y = f'(x) \)</span>
@@ -130,6 +136,7 @@
                     </div>
                 </div>
                 
+                <!-- 그리기 캔버스 -->
                 <div class="w-full md:w-1/2 bg-white rounded-2xl shadow-sm border border-indigo-300 p-4 flex flex-col relative">
                     <div class="font-bold text-slate-800 flex justify-between items-center mb-2 px-2">
                         <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-indigo-500"></span> 원함수 그리기 \( y = f(x) \)</span>
@@ -141,11 +148,13 @@
                 </div>
             </div>
 
+            <!-- 하단 네비게이션 -->
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex justify-between gap-4 shrink-0">
                 <button id="btnPrev" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl invisible">이전 문제</button>
                 <button id="btnNext" class="flex-1 max-w-sm py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md text-lg">다음 문제 ➔</button>
             </div>
             
+            <!-- 교사 피드백 알림 (학생 퀴즈 화면 내) -->
             <div id="teacherFeedbackAlert" class="hidden absolute top-20 right-6 p-4 bg-yellow-100 border border-yellow-300 rounded-2xl shadow-lg z-50 max-w-sm animate-bounce">
                 <p class="text-xs font-black text-yellow-800 mb-1 flex justify-between">
                     <span>👨‍🏫 선생님의 실시간 피드백!</span>
@@ -155,7 +164,7 @@
             </div>
         </div>
 
-        <!-- 요약 뷰 -->
+        <!-- 요약 뷰 (결과 화면) -->
         <div id="summary-view" class="hidden flex-col h-full w-full">
             <div class="bg-white p-6 md:p-8 rounded-3xl shadow-lg border border-slate-200 h-full flex flex-col relative">
                 <div class="text-center mb-6">
@@ -166,9 +175,11 @@
                         <span class="text-lg font-bold text-indigo-400"> / 100점</span>
                     </div>
                 </div>
+
                 <div id="summaryGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1 overflow-y-auto content-start pb-4 pr-2">
-                    <!-- 요약 카드가 렌더링됨 -->
+                    <!-- 요약 카드가 JS로 렌더링됨 -->
                 </div>
+
                 <div class="mt-4 pt-4 border-t border-slate-100 flex justify-center">
                     <p class="text-slate-500 font-medium text-sm">수정하고 싶은 문제가 있다면 위의 카드를 클릭하여 다시 풀 수 있습니다.</p>
                 </div>
@@ -176,6 +187,7 @@
         </div>
     </div>
 
+    <!-- 교사용 대시보드 화면 -->
     <div id="teacher-screen" class="hidden h-full flex-col bg-slate-100">
         <header class="bg-white px-6 py-4 shadow-sm border-b border-slate-200 flex justify-between items-center shrink-0">
             <h1 class="text-2xl font-black text-slate-800">👨‍🏫 실시간 채점 대시보드</h1>
@@ -185,6 +197,7 @@
         </header>
 
         <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+            <!-- 학생 전체 현황 목록 -->
             <div>
                 <h2 class="text-lg font-bold text-slate-800 mb-4 px-1">학생별 퀴즈 진행 현황</h2>
                 <div id="studentsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -194,8 +207,10 @@
         </div>
     </div>
 
+    <!-- 교사용 피드백 모달 -->
     <div id="teacherFeedbackModal" class="hidden fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col h-[90vh] overflow-hidden">
+            <!-- 모달 헤더 -->
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-indigo-50 shrink-0">
                 <div>
                     <h3 class="text-2xl font-black text-indigo-900" id="modalStudentTitle">학생 이름</h3>
@@ -204,12 +219,14 @@
                 <button onclick="closeTeacherModal()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 shadow-sm font-bold text-xl">✕</button>
             </div>
             
+            <!-- 문제 리스트 (스크롤) -->
             <div class="flex-1 overflow-y-auto p-6 bg-slate-50">
                 <div id="modalQuestionsList" class="space-y-6">
                     <!-- 8문제 리스트가 렌더링됨 -->
                 </div>
             </div>
 
+            <!-- 피드백 입력 영역 -->
             <div class="p-6 bg-white border-t border-slate-200 shrink-0">
                 <label class="block text-sm font-black text-slate-700 mb-2">이 학생에게 실시간 전체 피드백 보내기</label>
                 <div class="flex gap-3">
@@ -223,7 +240,7 @@
     </div>
 
     <script>
-        // 8개의 퀴즈 문제 정의 (도함수 문제_2.pdf 기반 재구성)
+        // --- 8개의 고정된 퀴즈 문제 정의 (도함수 문제.pdf 기반 재구성) ---
         const quizQuestions = [
             { id: 1, type: 'q_two_roots', params: { a: -2, b: 2 }, maxScore: 10, title: "문제 1", desc: "이차함수 (서로 다른 두 실근)" },
             { id: 2, type: 'q_double_root', params: { a: 0 }, maxScore: 10, title: "문제 2", desc: "이차함수 (중근, + +)" },
@@ -239,16 +256,17 @@
         const mathFuncs = {
             q_two_roots: { fPrime: (x, p) => 1.5 * (x - p.a) * (x - p.b), roots: (p) => [p.a, p.b].sort((a,b)=>a-b) },
             q_double_root: { fPrime: (x, p) => 1.5 * (x - p.a) * (x - p.a), roots: (p) => [p.a] },
-            q_imaginary: { fPrime: (x, p) => 0.5 * x * x + 1.5, roots: (p) => [] }, // 허근
+            q_imaginary: { fPrime: (x, p) => 0.5 * x * x + 1.5, roots: (p) => [] }, // 허근이므로 기준선 없음
             q_two_roots_neg: { fPrime: (x, p) => -1.5 * (x - p.a) * (x - p.b), roots: (p) => [p.a, p.b].sort((a,b)=>a-b) },
             c_three_roots: { fPrime: (x, p) => 0.4 * (x - p.a) * (x - p.b) * (x - p.c), roots: (p) => [p.a, p.b, p.c].sort((a,b)=>a-b) },
             c_double_left: { fPrime: (x, p) => 0.4 * (x - p.a) * (x - p.a) * (x - p.b), roots: (p) => [p.a, p.b].sort((a,b)=>a-b) },
             c_double_right: { fPrime: (x, p) => 0.4 * (x - p.a) * (x - p.b) * (x - p.b), roots: (p) => [p.a, p.b].sort((a,b)=>a-b) },
-            c_one_real: { fPrime: (x, p) => 0.2 * x * (x*x + 4), roots: (p) => [0] } // 실근 1개
+            c_one_real: { fPrime: (x, p) => 0.2 * x * (x*x + 4), roots: (p) => [0] } // 실근 1개만 표시
         };
 
         const X_MIN = -5, X_MAX = 5, Y_MIN = -10, Y_MAX = 10;
         
+        // 학생 상태 변수
         let currentQIndex = 0;
         let studentAnswers = Array(8).fill(null).map(() => ({ score: 0, points: [] }));
         let isDrawing = false;
@@ -258,7 +276,6 @@
         const canvas = document.getElementById('drawCanvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         
-        let userId = '';
         let userName = '';
         let userRole = '';
 
@@ -267,6 +284,7 @@
             const pwInput = document.getElementById('teacherPassword').value.trim();
             const statusEl = document.getElementById('loginStatus');
             
+            // 보안을 위한 하드코딩된 비밀번호 및 금지어 설정
             const TEACHER_PASSWORD = "math"; 
             const FORBIDDEN_NAMES = ["교사", "선생님", "admin", "관리자", "teacher"];
 
@@ -276,6 +294,7 @@
                     statusEl.classList.remove('hidden');
                     return;
                 }
+                // 학생이 교사 이름으로 접근하는 것 원천 차단
                 if (FORBIDDEN_NAMES.includes(nameInput.toLowerCase())) {
                     statusEl.innerText = "이 이름은 학생용으로 사용할 수 없습니다.";
                     statusEl.classList.remove('hidden');
@@ -283,6 +302,7 @@
                 }
                 userName = nameInput;
             } else if (role === 'teacher') {
+                // 선생님 대시보드는 반드시 비밀번호가 일치해야만 입장 가능
                 if (pwInput !== TEACHER_PASSWORD) {
                     statusEl.innerText = "교사 비밀번호가 틀렸습니다.";
                     statusEl.classList.remove('hidden');
@@ -298,12 +318,11 @@
             try {
                 if (!window.auth) throw new Error("Firebase Auth가 초기화되지 않았습니다.");
                 
-                // GitHub 배포 환경이므로 무조건 signInAnonymously 사용
+                // GitHub 배포 환경이므로 익명 로그인 실행
                 await window.fb.signInAnonymously(window.auth);
-                userId = window.auth.currentUser.uid;
 
                 userRole = role;
-                userName = nameInput;
+                userName = nameInput; // 학생의 이름을 고유 식별자로 사용
 
                 document.getElementById('login-screen').classList.add('hidden');
                 
@@ -352,17 +371,21 @@
             currentQIndex = index;
             const q = quizQuestions[index];
             
+            // UI 업데이트
             document.getElementById('questionTitle').innerText = q.title;
             document.getElementById('questionScoreLabel').innerText = `배점: ${q.maxScore}점`;
             
+            // 버튼 상태
             document.getElementById('btnPrev').style.visibility = index === 0 ? 'hidden' : 'visible';
             document.getElementById('btnNext').innerText = index === 7 ? "채점 및 결과보기 ➔" : "다음 문제 ➔";
             document.getElementById('btnNext').className = index === 7 
                 ? "flex-1 max-w-sm py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-md text-lg" 
                 : "flex-1 max-w-sm py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md text-lg";
 
+            // 그래프 및 캔버스 초기화
             updateDerivativeChart(q);
             
+            // 기존에 그렸던 답안 불러오기
             userPoints = [...studentAnswers[index].points];
             setTimeout(() => { resizeCanvas(); }, 50);
         }
@@ -404,7 +427,7 @@
                             x: { 
                                 type: 'linear', min: X_MIN, max: X_MAX,
                                 grid: {
-                                    // x축(y=0) 강조
+                                    // y축(x=0) 굵은 검은색 강조
                                     color: (ctx) => ctx.tick.value === 0 ? '#000000' : 'rgba(0,0,0,0.05)',
                                     lineWidth: (ctx) => ctx.tick.value === 0 ? 3 : 1
                                 }
@@ -412,7 +435,7 @@
                             y: { 
                                 min: Y_MIN, max: Y_MAX,
                                 grid: {
-                                    // y축(x=0) 강조
+                                    // x축(y=0) 굵은 검은색 강조
                                     color: (ctx) => ctx.tick.value === 0 ? '#000000' : 'rgba(0,0,0,0.05)',
                                     lineWidth: (ctx) => ctx.tick.value === 0 ? 3 : 1
                                 }
@@ -498,18 +521,18 @@
 
         async function handleNext() {
             evaluateCurrentQuestion();
-            await saveToFirebase();
+            await saveToFirebase(); // 매 문제마다 자동 저장
 
             if (currentQIndex < 7) {
                 loadQuestion(currentQIndex + 1);
             } else {
                 showSummaryScreen();
-                document.getElementById('btnShowSummary').classList.remove('hidden');
+                document.getElementById('btnShowSummary').classList.remove('hidden'); // 한 번 완료하면 요약버튼 노출
             }
         }
 
         function handlePrev() {
-            evaluateCurrentQuestion();
+            evaluateCurrentQuestion(); // 넘어가기 전 현재 상태 저장
             if (currentQIndex > 0) loadQuestion(currentQIndex - 1);
         }
 
@@ -549,6 +572,7 @@
             }
 
             let accuracy = totalTrends > 0 ? (correctTrends / totalTrends) : 0;
+            // 채점 관대하게: 정확도 80% 이상이면 만점, 50% 이상이면 부분점수(절반)
             let score = 0;
             if(accuracy >= 0.8) score = q.maxScore;
             else if(accuracy >= 0.5) score = Math.round(q.maxScore / 2);
@@ -557,20 +581,19 @@
         }
 
         async function saveToFirebase() {
-            if (!userId || !window.fb) return;
+            if (!userName || !window.fb) return;
             const totalScore = studentAnswers.reduce((sum, ans) => sum + ans.score, 0);
             
             const docData = {
-                studentId: userId,
                 studentName: userName,
                 totalScore: totalScore,
-                answers: JSON.stringify(studentAnswers),
+                answers: JSON.stringify(studentAnswers), // points 배열 저장 위해 직렬화
                 lastUpdated: Date.now()
             };
 
             try {
-                // GitHub 배포용 단순화 경로: submissions 컬렉션 사용
-                const docRef = window.fb.doc(window.db, 'submissions', userId);
+                // 핵심 변경점: 탭을 여러개 띄워도 덮어써지지 않도록 'userName(이름)'을 고유 방 번호로 지정
+                const docRef = window.fb.doc(window.db, 'submissions', userName);
                 await window.fb.setDoc(docRef, docData, { merge: true });
             } catch (error) {
                 console.error("Save error:", error);
@@ -614,9 +637,9 @@
         }
 
         function listenToTeacherFeedbackForStudent() {
-            if (!userId || !window.fb) return;
-            // 학생 화면에서 피드백 리스닝 (경로 동일화)
-            const docRef = window.fb.doc(window.db, 'submissions', userId);
+            if (!userName || !window.fb) return;
+            // 핵심 변경점: 피드백을 받을 때도 자신의 '이름(userName)' 문서를 감시
+            const docRef = window.fb.doc(window.db, 'submissions', userName);
             window.fb.onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
@@ -635,14 +658,15 @@
 
         function initTeacherApp() {
             if (!window.fb) return;
-            // 교사 대시보드 리스닝 (단순화된 경로)
             const subsRef = window.fb.collection(window.db, 'submissions');
             
+            // 단순 쿼리 후 전체 렌더링 (파이어베이스 실시간 동기화)
             window.fb.onSnapshot(subsRef, (snapshot) => {
                 let allSubmissions = [];
                 snapshot.forEach(docSnap => {
                     allSubmissions.push({ id: docSnap.id, ...docSnap.data() });
                 });
+                // 최신 제출이 맨 위로 오게 정렬
                 allSubmissions.sort((a, b) => b.lastUpdated - a.lastUpdated);
                 renderTeacherGrid(allSubmissions);
                 document.getElementById('teacherStatus').innerText = "데이터 연동 중 🟢";
@@ -682,7 +706,7 @@
         }
 
         function openTeacherModal(sub) {
-            selectedStudentIdForFeedback = sub.id;
+            selectedStudentIdForFeedback = sub.id; // sub.id는 이제 userName임
             document.getElementById('modalStudentTitle').innerText = `${sub.studentName} 학생의 답안`;
             document.getElementById('modalStudentTotal').innerText = sub.totalScore;
             document.getElementById('teacherFeedbackInput').value = sub.teacherFeedback || '';
@@ -693,6 +717,7 @@
             let parsedAnswers = [];
             try { parsedAnswers = JSON.parse(sub.answers || '[]'); } catch(e){}
 
+            // 8문제 렌더링
             quizQuestions.forEach((q, idx) => {
                 const ans = parsedAnswers[idx] || { score: 0, points: [] };
                 
@@ -716,6 +741,7 @@
                         if(mCanvas) {
                             mCanvas.width = mCanvas.clientWidth; mCanvas.height = mCanvas.clientHeight;
                             const mCtx = mCanvas.getContext('2d');
+                            // 수학 함수 임시 교체 후 그림 렌더링
                             const tempQIdx = currentQIndex; currentQIndex = idx; 
                             drawCanvasBackground(mCtx, mCanvas.width, mCanvas.height);
                             currentQIndex = tempQIdx;
@@ -740,7 +766,7 @@
             btn.innerText = "전송 중..."; btn.disabled = true;
 
             try {
-                // 교사가 피드백 전송 시에도 동일한 경로 사용
+                // 선생님이 피드백 전송 시 학생의 이름(id) 문서 업데이트
                 const docRef = window.fb.doc(window.db, 'submissions', selectedStudentIdForFeedback);
                 await window.fb.setDoc(docRef, { teacherFeedback: text }, { merge: true });
                 btn.innerText = "전송 완료!";
